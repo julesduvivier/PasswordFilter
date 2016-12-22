@@ -150,6 +150,30 @@ BOOLEAN CheckInWordlist(PWSTR password, wchar_t *file) {
     return true;
 }
 
+BOOLEAN CheckExactInTokensWordlist(PWSTR password, wchar_t *file) {
+	FILE* fp = _wfopen(file, L"r");
+	if (fp == NULL) {
+		Log(L"%s : %s", file, _wcserror(errno));
+	}
+	else
+	{
+		wchar_t bannedWord[100];
+		while (fgetws(bannedWord, sizeof(bannedWord), fp) != NULL) {
+			if (bannedWord[wcslen(bannedWord) - 1] == L'\n')
+			{
+				bannedWord[wcslen(bannedWord) - 1] = L'\0';
+			}
+			if (wcscmp(password, bannedWord)==0) {
+
+				Log(L"Password contains banned token : %s", bannedWord);
+				return false;
+			}
+		}
+		fclose(fp);
+	}
+	return true;
+}
+
 wchar_t* ToLowerString(wchar_t* string) {
     int i = 0;
     while (string[i]) {
@@ -205,7 +229,7 @@ BOOLEAN CheckTokenizedStringInWordlist(PUNICODE_STRING password, wchar_t *file)
                     {
                         wcsncpy(token, passwordContent + startIndex, tokenSize);
                         token[tokenSize] = L'\0';
-                        isComplex = CheckInWordlist(ToLowerString(token), file);
+                        isComplex = CheckExactInTokensWordlist(ToLowerString(token), file);
                         SecureZeroMemory(token, sizeof(token));
                         free(token);
                         token = NULL;
